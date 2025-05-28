@@ -1,6 +1,7 @@
 ---
 title: "HW 01"
-author: "INSERT YOUR NAME HERE"
+author: "Nathan Herling"
+due date: "Friday-May-27-2025"
 format: 
   html:
     embed-resources: true
@@ -9,20 +10,186 @@ toc: true
 
 ## 0 - Setup
 
-```{r setup}
+```{r setup, echo=FALSE}
 if (!require("pacman")) 
   install.packages("pacman")
 
 # use this line for installing/loading
-# pacman::p_load() 
+# pacman::p_load()
+# - packages to load stored in a variable (vector)
+pkgs <- c("tidyverse","glue","scales","lubricate")
+pacman::p_load(char=pkgs)
 
+# - install tidyverse/dsbox directly from Git Hub
 devtools::install_github("tidyverse/dsbox")
+# - alert to user packages loaded.
+cat(paste(
+  "The packages loaded:",
+  paste("-", pkgs, collapse = "\n"),
+  sep = "\n"
+))
+######################
+# Basic set Theme up #
+######################
+# set theme for ggplot2
+ggplot2::theme_set(ggplot2::theme_minimal(base_size = 14))
+
+# set width of code output
+options(width = 65)
+
+# set figure parameters for knitr
+knitr::opts_chunk$set(
+  fig.width = 7,        # 7" width
+  fig.asp = 0.618,      # the golden ratio
+  fig.retina = 3,       # dpi multiplier for displaying HTML output on retina
+  fig.align = "center", # center align figures
+  dpi = 300             # higher dpi, sharper image
+)
+
 ```
 
 ## 1 - Road traffic accidents in Edinburgh
 
 ```{r label-me-1}
+#------ SET UP ----- Problem (1)
+# read in accodents.csv
+library(reader)
+library(knitr)
+print(getwd())
+accidents <- read_csv("data/accidents.csv") 
 
+# Define the output file name
+output_file <- "accident_columns.txt"
+
+# Write column names to the file
+writeLines(colnames(accidents), output_file)
+
+#####################################################
+# Create a tibble with column, unique counts, and values (as string if < 9)
+unique_info <- map_df(accidents, ~ {
+  unique_vals <- unique(.x)
+  n <- length(unique_vals)
+  vals_str <- if (n < 9) paste(unique_vals, collapse = ", ") else NA_character_
+  tibble(unique_count = n, unique_values = vals_str)
+}, .id = "column")
+
+# Print nicely with kable (using markdown pipe table)
+table_text <- unique_info %>%
+  mutate(
+    unique_values = ifelse(is.na(unique_values), "", unique_values)
+  ) %>%
+  kable(format = "pipe", col.names = c("Column", "Unique Count", "Values if < 9"))
+
+writeLines(table_text, "unique_counts_detailed.txt")
+###########################################################
+
+#------- Graphing Code ---- Problem (1)
+# Convert 'time' to proper format if needed
+library(dplyr)
+library(ggplot2)
+library(hms)
+library(lubridate)
+library(scales)  # for label functions
+
+#------- Data Preparation ----
+# Load your data (adjust the path if needed)
+accidents <- readr::read_csv("data/accidents.csv")
+
+# -
+# Calculate missing percentages
+missing_percentages <- accidents %>%
+  summarise(across(everything(), ~mean(is.na(.)) * 100)) %>%
+  pivot_longer(everything(), names_to = "column", values_to = "missing_pct")
+# Save to a .txt file
+write.table(
+  missing_percentages,
+  file = "missing_percentages.txt",
+  row.names = FALSE,
+  quote = FALSE,
+  sep = "\t"
+)
+
+# Convert time to hour and add jitter for smoothing
+accidents <- accidents %>%
+  mutate(
+    time = hms::as_hms(time),       # Ensure time is in HH:MM:SS format
+    hour = hour(time)
+  ) %>%
+  filter(severity %in% c("Fatal", "Serious", "Slight")) %>%
+  mutate(
+    day_group = case_when(
+      day_of_week %in% c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday") ~ "Weekday",
+      day_of_week %in% c("Saturday", "Sunday") ~ "Weekend",
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  filter(!is.na(day_group)) %>%
+  mutate(jittered_hour = hour + runif(nrow(.), -0.5, 0.5))  # Add jitter for density
+
+# Define custom colors for severity levels
+severity_colors <- c(
+  "Fatal" = "#AA93B0",
+  "Serious" = "#9ECAC8",
+  "Slight" = "#FEF39F"
+)
+
+#------- Plotting Code ----
+ggplot(accidents, aes(x = jittered_hour, fill = severity)) +
+  geom_density(
+    alpha = 0.6,
+    linewidth = 0.9,
+    adjust = 1.1
+  ) +
+  facet_wrap(~day_group, ncol = 1) +
+  scale_fill_manual(values = severity_colors) +
+  scale_x_continuous(breaks = seq(0, 24, by = 4), limits = c(0, 24)) +
+  scale_y_continuous(
+    breaks = seq(0, 0.15, by = 0.1/3),
+    labels = label_scientific(digits = 2)) +
+  labs(
+    title = "Density of Accidents Throughout the Day\nBy Day of Week and Severity",
+    x = "Time of Day",
+    y = "Density",
+    fill = "Severity"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    strip.text = element_text(face = "bold")
+  )
+
+# Compute density data manually to get max y-values
+library(purrr)
+
+# Define a helper function to compute density per group
+compute_density <- function(df) {
+  dens <- density(df$jittered_hour, adjust = 1)
+  tibble(
+    x = dens$x,
+    y = dens$y,
+    severity = unique(df$severity),
+    day_group = unique(df$day_group)
+  )
+}
+
+# Group and compute density for each combination
+density_data <- accidents %>%
+  group_split(day_group, severity) %>%
+  map_dfr(compute_density)
+
+# Get max density value for each group
+max_density_summary <- density_data %>%
+  group_by(day_group, severity) %>%
+  summarise(max_density = max(y), .groups = "drop")
+
+# Write to file
+write.table(
+  max_density_summary,
+  file = "max_density_values.txt",
+  row.names = FALSE,
+  quote = FALSE,
+  sep = "\t"
+)
 ```
 
 ## 2 - NYC marathon winners
