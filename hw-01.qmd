@@ -50,7 +50,9 @@ knitr::opts_chunk$set(
 ```
 
 ## 1 - Road traffic accidents in Edinburgh
+{example feedback/description}
 
+This plot visualizes the distribution of road accidents across different times of the day, separated by weekend and weekday. The data is faceted by whether the day is a weekend or not, making it easy to compare patterns across these two categories. Accident severity is color-coded to distinguish between fatal, serious, and slight incidents. The plot reveals time-based trends that may help identify peak periods of high-risk activity. This information could support planning for improved traffic safety or emergency response allocation.
 ```{r label-me-1, echo=FALSE}
 #.csv file input
 accidents <- read_csv("data/accidents.csv", show_col_types = FALSE) 
