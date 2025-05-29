@@ -17,7 +17,7 @@ if (!require("pacman"))
 # use this line for installing/loading
 # pacman::p_load()
 # - packages to load stored in a variable (vector)
-pkgs <- c("tidyverse","glue","scales","lubricate")
+pkgs <- c("tidyverse","glue","scales","lubricate","patchwork")
 pacman::p_load(char=pkgs)
 
 # - install tidyverse/dsbox directly from Git Hub
@@ -49,17 +49,21 @@ knitr::opts_chunk$set(
 #####################################################################################
 ```
 
+
+
 ## 1 - Road traffic accidents in Edinburgh
-{example feedback/description}
+
+<div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB;">
 
 This plot visualizes the distribution of road accidents across different times of the day, separated by weekend and weekday. The data is faceted by whether the day is a weekend or not, making it easy to compare patterns across these two categories. Accident severity is color-coded to distinguish between fatal, serious, and slight incidents. The plot reveals time-based trends that may help identify peak periods of high-risk activity. This information could support planning for improved traffic safety or emergency response allocation.
+
+</div>
 ```{r label-me-1, echo=FALSE}
 #.csv file input
 accidents <- read_csv("data/accidents.csv", show_col_types = FALSE) 
 
 #------- Data Preparation ----
 # - create a new dataframe/tibble
-accidents_v2 <- accidents[c("day_of_week", "time", "severity")]
 accidents_v2 <- accidents[c("day_of_week", "time", "severity")]
 accidents_v2 <- accidents_v2 |>
   group_by(day_of_week) |>
@@ -91,12 +95,303 @@ g_1
 ```
 
 ## 2 - NYC marathon winners
+<div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB;">
+**Question 2a**
 
-```{r label-me-2}
+**Histograms show:**<br>
+- **Shape of the distribution:** The histogram reveals whether the distribution is symmetric, skewed (e.g., right-skewed), or multimodal.<br>
+- **Modes (peaks):** You can visually detect one or more peaks in the data.<br>
+- **Density & Spread:** It shows how densely packed the finish times are in different ranges.<br>
+- **Granularity:** Depending on bin width, you get a more detailed look at frequency in specific intervals.<br>
+
+**Box plots show:**<br>
+- **Median:** Clearly marks the central tendency with a horizontal line inside the box.<br>
+- **Quartiles:** The interquartile range (IQR) is explicitly visible, showing where the middle 50% of data lies.<br>
+- **Outliers:** Easily identifies extreme finish times beyond 1.5×IQR from the quartiles.<br>
+- **Range and spread:** Gives a concise summary of the minimum, maximum (excluding outliers), and variability.<br>
+</div>
+
+```{r label-me-2, echo=FALSE}
+#| message: false       # suppress messages (like read_csv column specs)
+#| results: hide
+
+#load the dataset, print it with view
+tibble_Marathon <- read_csv("data/nyc_marathon.csv")
+
+# - create a new tibble(df) for only times(hr:min:sec)
+tibble_Marathon_v2 <- tibble_Marathon[c("time_hrs")]
+
+# - fitler/Wrangle the data
+# REMOVE: "", "NA"
+tibble_Marathon_clean <- tibble_Marathon_v2 |>
+  dplyr::filter(
+    if_all(where(is.character), ~ .x != ""),
+    if_all(everything(), ~ !is.na(.x))
+  )
+
+#-- create a histogram
+#-- sturgis' rule for bin width
+bin_width_sturges <- tibble_Marathon_clean |>
+  summarise(
+    n = n(),
+    min_time = min(time_hrs),
+    max_time = max(time_hrs)
+  ) |>
+  mutate(
+    bins = ceiling(log2(n) + 1)*5,
+    bin_width = (max_time - min_time) / bins
+  ) |>
+  pull(bin_width)
+cat("Bin Width -", bin_width_sturges, "\n")
+# - create the graph
+
+
+
+# -- calculate number of bins and bin width (store both separately)
+bin_summary <- tibble_Marathon_clean |>
+  summarise(
+    n = n(),
+    min_time = min(time_hrs),
+    max_time = max(time_hrs)
+  ) |>
+  mutate(
+    bins = ceiling(log2(n) + 1)*5,
+    bin_width = (max_time - min_time) / bins
+  )
+
+bin_width_sturges <- pull(bin_summary, bin_width)
+num_bins <- pull(bin_summary, bins)
+cat("Bin Width -", bin_width_sturges, "\n")
+
+# -- Histogram plot
+
+# First create the combined title string outside of ggplot
+title_text_hist <- paste0(
+  "Histogram of Marathon Times (n = ", num_bins, ")\n",
+  "Bin width = ", format(round(bin_width_sturges, 2), nsmall = 2), " Hours / ",
+  format(round(bin_width_sturges * 60, 2), nsmall = 2), " min."
+)
+
+g_1a <- ggplot(tibble_Marathon_clean, aes(x = time_hrs)) +
+  geom_histogram(
+    binwidth = as.numeric(bin_width_sturges),
+    fill = "cornsilk4",
+    color = "black"
+  ) +
+  labs(
+    x = "Time (hours)",
+    y = "Count",
+    title = title_text_hist
+  ) +
+  theme(
+    plot.title = element_text(size = 11, face = "plain", hjust = 0.5),
+    axis.title = element_text(size = 10),
+    axis.text = element_text(size = 9)
+  )
+
+# -- Boxplot plot
+title_text_box <- glue("Box plot of NYC Marathon times.")
+
+g_boxplot <- ggplot(tibble_Marathon_clean, aes(x = "", y = time_hrs)) +
+  geom_boxplot(width = 0.3, fill = "skyblue", color = "darkblue") +
+  labs(
+    x = NULL,
+    y = "Time (hours)",
+    title = title_text_box
+  ) +
+  scale_x_discrete(breaks = NULL) +
+  scale_y_continuous(limits = c(1.75, NA))+
+  theme(
+    plot.title = element_text(size = 11, face = "plain", hjust = 0.5),
+    axis.title = element_text(size = 10),
+    axis.text = element_text(size = 9)
+  )
+
+# -- Combine with overall title
+combined_plot <- (g_1a | plot_spacer() | g_boxplot) +
+  plot_layout(ncol = 3, widths = c(1, 0.4, 1), guides = "collect") +
+  plot_annotation(
+    title = "Marathon times of runners in the Men and Women divisions\nof the New York City Marathon, 1970 - 2023.",
+    caption = "Source: https://github.com/OpenIntroStat/openintro/blob/main/R/data-nyc_marathon.R",
+    theme = theme(
+      plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+      plot.title.position = "plot",
+      plot.margin = margin(10, 40, 10, 40)
+    )
+  )
+
+# -- Print
+combined_plot
 
 ```
 
+<div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB;">
+**Question 2b**
+
+.. blah.. blah..<br>
+</div>
+
+```{r label-me-2b, echo=FALSE}
+#| message: false       # suppress messages (like read_csv column specs)
+#| results: hide
+#load the dataset, print it with view
+tb_Marathon_2b <- read_csv("data/nyc_marathon.csv")
+#View(tb_Marathon_2b)
+
+#mutate/select desired cols.
+# - create a new tibble(df) for only times(hr:min:sec)
+tb_Marathon_2b_v2 <- tibble_Marathon[c("time_hrs","division")]
+#View(tb_Marathon_2b_v2)
+
+# - fitler/Wrangle the data
+# REMOVE: "", "NA"
+tb_Marathon_2b_v2_clean <- tb_Marathon_2b_v2 |>
+  dplyr::filter(
+    if_all(where(is.character), ~ .x != ""),
+    if_all(everything(), ~ !is.na(.x))
+  )
+
+
+# Custom colors for Men and Women
+my_colors <- c("Men" = "#85bfc3", "Women" = "#c38081")
+
+g_boxplot_2b <- ggplot(tb_Marathon_2b_v2_clean, aes(x = division, y = time_hrs, fill = division)) +
+  geom_boxplot(show.legend = TRUE, outlier.shape = NA) +  # Hide default outliers to avoid double plotting
+  geom_jitter(aes(color = division), width = 0.2, alpha = 0.6, size = 1.5, show.legend = FALSE) +  # jitter points
+  facet_wrap(~ division) +                                # Facet by division
+  scale_fill_manual(values = my_colors) +                # Boxplot fill colors
+  scale_color_manual(values = my_colors) +               # Jitter points color matches box fill
+  labs(
+    title = "Marathon times of runners in the Men and Women divisions\nof the New York City Marathon, 1970 - 2023.",
+    x = NULL,
+    y = "Time [hours]"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    strip.text = element_text(size = 14, face = "bold"),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  )
+
+print(g_boxplot_2b)
+```
+
+
+
+<div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB;">
+  <strong>Question 2c</strong>
+  <p>If we ignore the outliers for the box plots, the interquartile range(s) for the different divisions (Men/Women) are separated enough visually on the graph that we can overlap the graphs.</p>
+  <p>.. blah.. blah..</p>
+</div>
+
+```{r label-me-2c, echo=FALSE}
+
+```
+
+
+<div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB;">
+
+**Question 2d**
+
+This plot clearly makes the mean for each division visible, where as it was not easily discernible how consistent the mean time is in the other graphs. Additionally both data sets have a similar decaying exponential shape from left-to-right that was not visible in the other data plots.
+</div>
+
+```{r label-me-2d, echo=FALSE}
+#| message: false       # suppress messages (like read_csv column specs)
+#| results: hide
+#load the dataset, print it with view
+tb_Marathon_2d <- read_csv("data/nyc_marathon.csv")
+View(tb_Marathon_2d)
+
+#mutate/select desired cols.
+# - create a new tibble(df) for only times(hr:min:sec)
+tb_Marathon_2d_v2 <- tibble_Marathon[c("time_hrs","division","year")]
+View(tb_Marathon_2d_v2)
+
+
+# - fitler/Wrangle the data
+# REMOVE: "", "NA"
+tb_Marathon_2d_v2_clean <- tb_Marathon_2d_v2 |>
+  dplyr::filter(
+    if_all(where(is.character), ~ .x != ""),
+    if_all(everything(), ~ !is.na(.x))
+  )
+
+# Make sure time_hrs is numeric
+tb_Marathon_2d_v2_clean$time_hrs <- as.numeric(tb_Marathon_2d_v2_clean$time_hrs)
+
+#view(tb_Marathon_2d_v2_clean)
+
+# Custom colors for Men and Women
+my_colors <- c("Men" = "#85bfc3", "Women" = "#c38081")
+
+# Create the time series plot
+g_2d <- ggplot(tb_Marathon_2d_v2_clean, aes(x = year, y = time_hrs, color = division, shape = division)) +
+  geom_point(size = 3) +
+  scale_color_manual(values = my_colors) +
+  labs(
+    title = "Marathon times of runners in the Men and Women divisions\nof the New York City Marathon, 1970 - 2023.",
+    x = "Year",
+    y = "Finish Time (hours)",
+    color = "Division",
+    shape = "Division",
+    caption = "Source: https://github.com/OpenIntroStat/openintro/blob/main/R/data-nyc_marathon.R"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 14, face = "bold")
+  )
+
+g_2d
+```
+
 ## 3 - US counties
+<div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB;">
+
+**Question 3a**<br>
+This code attempts to make two differenlty dimensioned plots overlay one another.
+ <pre style="white-space:pre-wrap; line-height:1;"><code>
+ggplot(county) +
+  geom_point(aes(x = median_edu, y = median_hh_income)) +
+  </code></pre>
+  
+  The first line - Creates a geom_point or scatter plot with median_edv vs. median_hh_income.
+ <pre style="border:1px solid #4A4A4A; padding:5px;"><code>
+ggplot(county) +
+  geom_point(aes(x = median_edu, y = median_hh_income)) +
+  </code></pre>
+
+The second line - Creates a boxplot with smoking_ban and pop2017 as its parameters.
+ <pre style="border:1px solid #4A4A4A; padding:5px;"><code>
+ggplot(county) +
+  geom_boxplot(aes(x = smoking_ban, y = pop2017))
+  </code></pre>
+
+
+Both geom_point and geom_boxplot are layered in the same ggplot, but they rely on different x and y variables. On their own, each layer would produce a meaningful plot, but combined, they result in a confusing and misleading visualization—a kind of visual cacophony.
+
+Technically, the code may run without error, but it doesn't "work" from a data visualization standpoint. Mixing different aesthetics (continuous vs. categorical x-axes) in one plot without coordinating scales or structure leads to a plot that is hard to interpret and potentially misleading.
+</div>
+
+<div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB;">
+
+**Question 3b**<br>
+We are to compare two graphs, each showing the same data but presented differently.
+<img src="images/county-facets-1.png" alt="County facets plot" style="width:100%; max-width:300px;" />
+<img src="images/county-facets-2.png" alt="County facets plot" style="width:100%; max-width:300px;" />
+
+An obvious answer is the left graph, where the data is plotted horizontally has more visual
+striking power.
+Yet, if we look at how the data is grouped on the vertical graph we see some 
+skewing of the data geometry represented in the left graph.
+
+Therefore, from these two graphs we cannot conclude that 'in general' graphing
+data such as this horizontally will yield better visual results. To truly make
+a comparison the vertical graph would need to be stretched out to the same dimension/scale 
+as the horizontal graph.
+
+</div>
 
 ## 4 - Rental apartments in SF
 
