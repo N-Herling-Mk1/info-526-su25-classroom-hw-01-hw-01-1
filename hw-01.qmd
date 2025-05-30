@@ -394,6 +394,12 @@ as the horizontal graph.
 
 </div>
 
+<div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB;">
+
+**Question 3c**<br>
+_#TODO
+</div>
+
 ## 4 - Rental apartments in SF
 <div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB;">
 
