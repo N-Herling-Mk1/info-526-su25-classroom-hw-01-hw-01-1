@@ -17,7 +17,7 @@ if (!require("pacman"))
 # use this line for installing/loading
 # pacman::p_load()
 # - packages to load stored in a variable (vector)
-pkgs <- c("tidyverse","glue","scales","lubridate","patchwork","ggh4x","ggrepel")
+pkgs <- c("tidyverse","glue","scales","lubridate","patchwork","ggh4x","ggrepel","openintro")
 pacman::p_load(char=pkgs)
 
 # - install tidyverse/dsbox directly from Git Hub
@@ -343,12 +343,12 @@ This plot allows us to clearly see how tightly the data is grouped around the me
 #| results: hide
 #load the dataset, print it with view
 tb_Marathon_2d <- read_csv("data/nyc_marathon.csv")
-View(tb_Marathon_2d)
+#View(tb_Marathon_2d)
 
 #mutate/select desired cols.
 # - create a new tibble(df) for only times(hr:min:sec)
 tb_Marathon_2d_v2 <- tibble_Marathon[c("time_hrs","division","year")]
-View(tb_Marathon_2d_v2)
+#View(tb_Marathon_2d_v2)
 
 
 # - fitler/Wrangle the data
@@ -438,8 +438,182 @@ as the horizontal graph.
 <div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB; margin:20px 0; width:100%; text-align:left;">
 
 **Question 3c**<br>
-_#TODO
+<p><strong>Note(s):</strong></p>
+<ul>
+  <li>I left these warnings in - as they seem relevant.</li>
+  <li>If I had more time, I'd work on cleaning the data.</li>
+  <li>I did not have enough time to adequately solve the size rendering problem here.</li>
+  <li>Use 'zoom' when needed (ha).</li>
+  <li>I kept the 'minimal' theme on - so the background grey shading isn't present on my graphs.</li>
+</ul>
 </div>
+```{r label-me-3c, echo=FALSE}
+#| message: false       # suppress messages (like read_csv column specs)
+#| results: hide
+#| fig-width: 14 
+#| fig-height: 10
+ 
+
+data(county)         # Loads the dataset into the environment
+#View(county)         # Opens a spreadsheet-style view of the dataset
+#head(county)         # Shows the first few rows
+#str(county)          # Shows structure and variable types
+
+#colnames(county)
+
+
+#----- plan ------
+# build the plots individually then plot them in grid fomrat.
+# the closest 'guess' I could get to the model was using: method = "loess"
+#------------------
+
+# Scales and theme customization
+common_theme <- theme_minimal(base_size = 12) +
+  theme(
+    axis.ticks.length = unit(0.25, "cm"),
+    axis.ticks = element_line(color = "black"),
+    legend.position = "none"
+  )
+
+# Shared axis scales
+x_scale <- scale_x_continuous(breaks = c(0, 25, 50, 75), limits = c(0, 100))
+y_scale <- scale_y_continuous(breaks = c(0, 10, 20, 30, 40, 50), limits = c(0, 50))
+
+pA <- ggplot(county, aes(x = homeownership, y = poverty)) +
+  geom_point() +
+  x_scale + y_scale + common_theme +
+  ggtitle("Plot A")
+
+#print(pA)
+
+pB <- ggplot(county, aes(x = homeownership, y = poverty)) +
+  geom_point() +
+  geom_smooth(data = county %>% filter(metro == "yes"),
+              method = "loess", se = FALSE, color = "blue") +
+  x_scale + y_scale + common_theme +
+  ggtitle("Plot B")
+
+#print(pB)
+
+pC <- ggplot(county, aes(x = homeownership, y = poverty)) +
+  geom_point() +
+  geom_smooth(data = county %>% filter(metro == "yes"), method = "loess", se = FALSE, color = "green") +
+  geom_smooth(data = county %>% filter(metro == "no"), method = "loess", se = FALSE, color = "green") +
+  x_scale + y_scale + common_theme +
+  ggtitle("Plot C")
+
+#print(pC)
+
+pD <- ggplot(county, aes(x = homeownership, y = poverty)) +
+  geom_point() +
+  geom_smooth(data = county %>% filter(metro == "yes"), method = "loess", se = FALSE, color = "blue") +
+  geom_smooth(data = county %>% filter(metro == "no"), method = "loess", se = FALSE, color = "blue") +
+  x_scale + y_scale + common_theme +
+  ggtitle("Plot D")
+
+
+#print(pD)
+# ---- turned out to be the most complicated ...
+pE <- ggplot(county, aes(x = homeownership, y = poverty)) +
+  geom_point(aes(color = metro)) +
+  
+  geom_smooth(
+    data = county %>% filter(metro == "no"),
+    method = "loess", se = FALSE,
+    aes(linetype = "no"),
+    color = "#5980fb"
+  ) +
+  
+  geom_smooth(
+    data = county %>% filter(metro == "yes"),
+    method = "loess", se = FALSE,
+    aes(linetype = "yes"),
+    color = "#5980fb"
+  ) +
+  
+  scale_color_manual(
+    values = c("no" = "#f8766e", "yes" = "#01bfc3", "NA" = "#868686"),
+    name = "metro"
+  ) +
+  scale_linetype_manual(
+    values = c("no" = "solid", "yes" = "dashed"),
+    name = "metro"
+  ) +
+  
+  x_scale + y_scale +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.ticks.length = unit(0.25, "cm"),
+    axis.ticks = element_line(color = "black"),
+    legend.position = "right",
+    legend.box = "vertical"
+  ) +
+  
+  guides(
+    linetype = guide_legend(order = 1),   # Trend line legend first
+    color = guide_legend(order = 2)       # Point color legend second
+  ) +
+  
+  ggtitle("Plot E")
+
+#print(pE)
+
+pF <- ggplot(county, aes(x = homeownership, y = poverty, color = metro)) +
+  geom_point() +
+  scale_color_manual(values = c("no" = "#f8766e", "yes" = "#01bfc3", "NA" = "#868686"), name = "metro") +
+  geom_smooth(data = county %>% filter(metro == "no"), method = "loess", se = FALSE, color = "#f8766e", linetype = "solid") +
+  geom_smooth(data = county %>% filter(metro == "yes"), method = "loess", se = FALSE, color = "#01bfc3", linetype = "solid") +
+  x_scale + y_scale +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.ticks.length = unit(0.25, "cm"),
+    axis.ticks = element_line(color = "black"),
+    legend.position = "right"
+  ) +
+  ggtitle("Plot F")
+
+#print(pF)
+
+pG <- ggplot(county, aes(x = homeownership, y = poverty, color = metro)) +
+  geom_point() +
+  geom_smooth(data = county %>% filter(metro == "yes"),
+              method = "loess", se = FALSE, color = "#5980fb") +
+  scale_color_manual(
+    values = c("no" = "#f8766e", "yes" = "#01bfc3", "NA" = "#868686"),
+    name = "metro"
+  ) +
+  x_scale + y_scale +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.ticks.length = unit(0.25, "cm"),
+    axis.ticks = element_line(color = "black"),
+    legend.position = "right"
+  ) +
+  ggtitle("Plot G")
+#print(pG)
+
+pH <- ggplot(county, aes(x = homeownership, y = poverty, color = metro)) +
+  geom_point() +
+  scale_color_manual(values = c("no" = "#f8766e", "yes" = "#01bfc3", "NA" = "#868686"), name = "metro") +
+  x_scale + y_scale +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.ticks.length = unit(0.25, "cm"),
+    axis.ticks = element_line(color = "black"),
+    legend.position = "right"
+  ) +
+  ggtitle("Plot H")
+
+#print(pH)
+
+
+# - combine all plots (Noice..)
+combined_plot <- (pA | pB) / (pC | pD) / (pE | pF) / (pG | pH)
+  
+
+print(combined_plot)
+
+```
 
 ## 4 - Rental apartments in SF
 <div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB; margin:20px 0; width:100%; text-align:left;">
@@ -457,13 +631,13 @@ This suggests that while income strongly influences credit card balance, the eff
 #| results: hide
 #load the dataset, print it with view
 tb_credits <- read_csv("data/credit.csv")
-View(tb_credits)
+#View(tb_credits)
 
 #TransForm1 (tf1)- will simply cut out the 'limit' category.
 tb_credis_tf1 <- tb_credits[c("balance","income","student","married")]
-View(tb_credis_tf1)
+#View(tb_credis_tf1)
 
-head(tb_credis_tf1)
+#head(tb_credis_tf1)
 
 
 g4a <- ggplot(tb_credis_tf1, aes(x = income, y = balance)) +
@@ -534,7 +708,7 @@ Overall, the relationship between income and balance appears to be roughly linea
 #| message: false       # suppress messages (like read_csv column specs)
 #| results: hide
 tb_credits <- read_csv("data/credit.csv")
-View(tb_credits)
+#View(tb_credits)
 
 #TransForm1 (tf2)- will simply cut out the 'limit' category.
 tb_credis_tf2 <- tb_credits %>%
