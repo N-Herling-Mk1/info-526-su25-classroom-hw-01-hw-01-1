@@ -17,7 +17,7 @@ if (!require("pacman"))
 # use this line for installing/loading
 # pacman::p_load()
 # - packages to load stored in a variable (vector)
-pkgs <- c("tidyverse","glue","scales","lubridate","patchwork","ggh4x")
+pkgs <- c("tidyverse","glue","scales","lubridate","patchwork","ggh4x","ggrepel")
 pacman::p_load(char=pkgs)
 
 # - install tidyverse/dsbox directly from Git Hub
@@ -221,7 +221,7 @@ combined_plot
 
 <div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB;">
 **Question 2b**<br>
-Box plots are a great way to visualize distributions. Here, we see that the men's and women's time distributions slightly overlap, but only when considering some of the men's outliers. This illustrates a distinctly bimodal distribution, where the two groups are largely separated.
+Box plots are a great way to visualize distributions. Here, we see that the men's and women's time distributions slightly overlap, but only when considering some of the men's outliers. Plotting either alone would not allow us to see the bimodal distribution, plotting together however, allows us to see a distinctly bimodal distribution, where the two groups are largely separated.
 </div>
 
 ```{r label-me-2b, echo=FALSE}
@@ -276,7 +276,7 @@ g_boxplot_2b
 <div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB; margin:20px 0; width:100%; text-align:left;">
   **Question 2c**<br>
 In a large number of examples, redundancy is subjective—what one person considers 'redundancy' might be seen as a 'feature' by another. 
-Here, we can consolidate the data distributions onto a single plot, as they largely do not overlap. This approach eliminates the need to label both graphs separately. Furthermore, to leverage the visual tendency to perceive relative color differences, one of the groups can be changed to gray [cornsilk4].
+Here, we can consolidate the data distributions onto a single plot, as they largely do not overlap. This approach eliminates the need to label both graphs separately. Furthermore, to leverage the visual tendency to perceive relative color differences, one of the groups can be changed to gray [cornsilk4]. By keeping our data the same and reducing the amount of ink used, we've effectively increased our data/ink ratio, which is the desired effect.
 
 </div>
 
@@ -335,7 +335,7 @@ g_boxplot_overlay
 
 **Question 2d**
 
-This plot clearly makes the mean for each division visible, where as it was not easily discernible how consistent the mean time is in the other graphs. Additionally both data sets have a similar decaying exponential shape from left-to-right that was not visible in the other data plots.
+This plot allows us to clearly see how tightly the data is grouped around the mean for both categories. While the histogram also conveys this information, this visual representation presents it in a different modality. The bimodal distribution of the two data categories is clearly visible, along with the minimal overlap between the datasets. Additionally, both datasets exhibit a similar decaying exponential shape from left to right, which was not apparent in the other data plots.
 </div>
 
 ```{r label-me-2d, echo=FALSE}
@@ -388,13 +388,14 @@ g_2d
 ```
 
 ## 3 - US counties
-<div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB;">
+<div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB; margin:20px 0; width:100%; text-align:left;">
 
 **Question 3a**<br>
 This code attempts to make two differenlty dimensioned plots overlay one another.
  <pre style="white-space:pre-wrap; line-height:1;"><code>
 ggplot(county) +
   geom_point(aes(x = median_edu, y = median_hh_income)) +
+  geom_boxplot(aes(x = smoking_ban, y = pop2017)
   </code></pre>
   
   The first line - Creates a geom_point or scatter plot with median_edv vs. median_hh_income.
@@ -415,7 +416,7 @@ Both geom_point and geom_boxplot are layered in the same ggplot, but they rely o
 Technically, the code may run without error, but it doesn't "work" from a data visualization standpoint. Mixing different aesthetics (continuous vs. categorical x-axes) in one plot without coordinating scales or structure leads to a plot that is hard to interpret and potentially misleading.
 </div>
 
-<div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB;">
+<div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB; margin:20px 0; width:100%; text-align:left;">
 
 **Question 3b**<br>
 We are to compare two graphs, each showing the same data but presented differently.
@@ -425,7 +426,7 @@ We are to compare two graphs, each showing the same data but presented different
 An obvious answer is the left graph, where the data is plotted horizontally has more visual
 striking power.
 Yet, if we look at how the data is grouped on the vertical (right) graph we see some 
-skewing of the data geometry represented in the left graph.
+skewing (topographical compression) of the data geometry represented in the left graph.
 
 Therefore, from these two graphs we cannot conclude that 'in general' graphing
 data such as this horizontally will yield better visual results. To truly make
@@ -519,7 +520,9 @@ g4a
 
 **Question 4b**<br>
 <b>Based on your answer to part (a), do you think married and student might be useful predictors, in addition to income for predicting credit card balance? Explain your reasoning.</b><br>
-Yes, although it's important to note that there are many zero outliers to consider. While income appears to be a key factor, it's also important to recognize that, overall, the data for individuals who are both married and students shows a positively increasing trend when comparing income to credit card balance.
+Yes, with some caveats.
+There are a few outliers with zero balances that should be taken into account. Additionally, the distribution of the data is skewed—most observations fall below an income of $75K, and within this range, there is a higher variance in credit card balances.
+Overall, the relationship between income and balance appears to be roughly linear, suggesting that income is a useful predictor. Finally, it should be noted that this synopsis could apply to all four categories examined, not just: married students.
 </div>
 
 <div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB; margin:20px 0; width:100%; text-align:left;">
@@ -622,7 +625,10 @@ Here are a couple of sites that helped me with the code and understanding of the
 <b>Part b</b><br>
 I added extra code comments with '#<----- ' in the code for this problem, to add extra description(s)/proof of knowledge of code functionality.
 <br><b>Part c</b><br>
-For my individualization, I forced the city names to 'non overlap' and changed their color to a hue that was legible on both white and brown backgrounds. [#00CED1]
+For my individualization, I forced the city names to 'non overlap' and changed their color to a hue that was legible on both white and brown backgrounds.
+[#00CED1] 
+<br>The non-overlapping caused a problem of the names then not all fitting in the graph window. This was solved with a call to:
+ggrepel::geom_text_repel(..)
 </div>
 ```{r label-me-5, echo=FALSE}
 #| message: false       # suppress messages (like read_csv column specs)
@@ -644,21 +650,21 @@ troop_plot <- ggplot(napoleon$troops) +
   scale_size(range = c(0.5, 8),     #<----- adjusting the size of the legend. 
              name = "Survivors", 
              guide = "legend",
-             labels = scales::label_number(scale = 1e-3, suffix = "K" ) # <-- Added this line to format numbers as "100K"
+             labels = scales::label_number(scale = 1e-3, suffix = "K" ) # <-- format numbers as "100K" (which didn't hold in comb. graph..)
              )+
   scale_color_manual(values = c("advancing" = "#8B4513", "retreating" = "#000000"),
                      name = "Direction") + #<----- additional legend coloring...
   geom_point(data = napoleon$cities, aes(x = long, y = lat), color = "black") +
-  geom_text(data = napoleon$cities, aes(x = long, y = lat, label = city),
-            hjust = -0.1,                   #<----- adjusting the color and placement of the city names.
-            vjust = -0.5, 
-            size = 4,
-            check_overlap = TRUE,
-            color = "#00CED1") +
+  #<--- this beauty repels and makes sure they stay in the plot window.
+  ggrepel::geom_text_repel(data = napoleon$cities, aes(x = long, y = lat, label = city),   
+                           size = 4,
+                           color = "#00CED1",
+                           min.segment.length = 0
+            ) +
   labs(title = "Napoleon’s March to and from Moscow (1812)",
        x = "Longitude", y = "Latitude") +
   theme(legend.position = "right",                #<----------- adjusting legend position
-        plot.margin = unit(c(1.5, 0, 0, 0), "cm") #<----------- adjusting plot margin
+        plot.margin = unit(c(0, 0, 0, -3), "cm") #<----------- adjusting plot margin
         )
 
 ####
@@ -671,7 +677,8 @@ temp_plot <- ggplot(napoleon$temperatures) +
   labs(title = "Temperature During Napoleon's Retreat",
        x = "Date", y = "Temperature (°C)") +
   theme(
-        plot.margin = unit(c(0, 0, 0, 0), "cm") #<----- plot margins
+      legend.position = "right",                
+      plot.margin = unit(c(0, 0, 0, 0), "cm")  #<--- UPDATED plot.margin to give extra space on the right
        )
 
 
