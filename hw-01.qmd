@@ -280,7 +280,8 @@ print(g_boxplot_2b)
 
 
 <div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB;">
-  <strong>Question 2c</strong>
+  **Question 2c**
+  #TO_DO
   <p>If we ignore the outliers for the box plots, the interquartile range(s) for the different divisions (Men/Women) are separated enough visually on the graph that we can overlap the graphs.</p>
   <p>.. blah.. blah..</p>
 </div>
@@ -435,8 +436,8 @@ g4a <- ggplot(tb_credis_tf1, aes(x = income, y = balance)) +
       background_y = list(
         element_rect(fill = "grey80", colour = c("grey30", "black", "grey30", "grey30"), linewidth = 1)
       ),
-      text_x = list(element_text(face = "bold")),
-      text_y = list(element_text(face = "bold"))
+      text_x = list(element_text(margin = margin(t = 4, b =5, l = 4, r = 4))),   # manually control margins if you like..
+      text_y = list(element_text(margin = margin(t = 4, b = 4, l = 5, r = 5)))  
     )
   ) +
   scale_x_continuous(
@@ -451,14 +452,31 @@ g4a <- ggplot(tb_credis_tf1, aes(x = income, y = balance)) +
   ) +
   theme_minimal() +
   theme(
-    strip.placement = "outside",
-    strip.text.y.right = element_text(face = "bold"),
-    panel.spacing = unit(1, "lines"),
+    strip.text.y.right = element_text(),   #removed face="bold"
+    panel.spacing = unit(0.5, "lines"),
+    panel.border = element_rect(color = "grey30", fill = NA, linewidth = 1),
+    plot.margin = unit(c(5, 0, 0, 0),"pt"),  # controls 'outside' of graph (t,b,l,r)
     legend.position = "none"
   )
 
+
 g4a
 ```
+<div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB;">
 
+**Question 4b**
+.. text answers ...
+</div>
+
+<div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB;">
+
+**Question 4c**
+.. make a graph ...
+</div>
 
 ## 5 - Napoleon’s march.
+<div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB;">
+
+**Question 5**
+.. the greatest figure of ALL TIME  ...
+</div>
