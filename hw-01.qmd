@@ -56,8 +56,9 @@ knitr::opts_chunk$set(
 
 <div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB;">
 
-This plot visualizes the distribution of road accidents across different times of the day, separated by weekend and weekday. The data is faceted by whether the day is a weekend or not, making it easy to compare patterns across these two categories. Accident severity is color-coded to distinguish between fatal, serious, and slight incidents. The plot reveals time-based trends that may help identify peak periods of high-risk activity. This information could support planning for improved traffic safety or emergency response allocation.
+This plot visualizes the distribution of road accidents at different times of day, separated into weekdays and weekends. The data is faceted by whether the day is a weekend, making it easy to compare patterns across these two categories. Accident severity is color-coded to distinguish between fatal, serious, and slight incidents. The plot highlights time-based trends that may help identify peak periods of high-risk activity. This information could support efforts to improve traffic safety or allocate emergency response resources more effectively.
 
+One striking trend is the high number of fatalities on weekdays, in contrast to the weekend plot, which shows no visible fatalities.
 </div>
 ```{r label-me-1, echo=FALSE}
 #.csv file input
@@ -73,13 +74,15 @@ accidents_v2 <- accidents_v2 |>
     TRUE ~ "Weekday"
   ))
 
-view(accidents_v2)
+#view(accidents_v2)
 
 #set up the color schme
 color_scheme <- c("Fatal"="#aa93b0","Serious"= "#9ecac8", "Slight"="#fef39f")
 
 
 #-create the 'gg' plot...
+# - NOTE - here I was practicing the mantra of 'overlaying' ..
+# - after this, I don't apply this syntax anymore.
 g_1 <- ggplot(accidents_v2, aes(x=time, group=severity, fill=severity))
 g_1 <- g_1 + geom_density(alpha=0.7)  + facet_wrap(~is_weekend, nrow=2)
 g_1 <- g_1 + 
@@ -97,19 +100,8 @@ g_1
 
 ## 2 - NYC marathon winners
 <div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB;">
-**Question 2a**
-
-**Histograms show:**<br>
-- **Shape of the distribution:** The histogram reveals whether the distribution is symmetric, skewed (e.g., right-skewed), or multimodal.<br>
-- **Modes (peaks):** You can visually detect one or more peaks in the data.<br>
-- **Density & Spread:** It shows how densely packed the finish times are in different ranges.<br>
-- **Granularity:** Depending on bin width, you get a more detailed look at frequency in specific intervals.<br>
-
-**Box plots show:**<br>
-- **Median:** Clearly marks the central tendency with a horizontal line inside the box.<br>
-- **Quartiles:** The interquartile range (IQR) is explicitly visible, showing where the middle 50% of data lies.<br>
-- **Outliers:** Easily identifies extreme finish times beyond 1.5×IQR from the quartiles.<br>
-- **Range and spread:** Gives a concise summary of the minimum, maximum (excluding outliers), and variability.<br>
+**Question 2a**<br>
+The histogram highlights a bimodal distribution, revealing differences in marathon times between men and women. It effectively shows the shape of the data and how values cluster across different ranges. In contrast, the box plot does not capture modality but provides a summary of central tendency, variability, and outliers. While histograms emphasize distribution shape, box plots offer a concise overview of data spread.
 </div>
 
 ```{r label-me-2, echo=FALSE}
@@ -131,7 +123,7 @@ tibble_Marathon_clean <- tibble_Marathon_v2 |>
   )
 
 #-- create a histogram
-#-- sturgis' rule for bin width
+#-- sturgis' rule for bin width (I ended up multiplying 'bins' by 5 because I like the visual)
 bin_width_sturges <- tibble_Marathon_clean |>
   summarise(
     n = n(),
@@ -144,9 +136,6 @@ bin_width_sturges <- tibble_Marathon_clean |>
   ) |>
   pull(bin_width)
 cat("Bin Width -", bin_width_sturges, "\n")
-# - create the graph
-
-
 
 # -- calculate number of bins and bin width (store both separately)
 bin_summary <- tibble_Marathon_clean |>
@@ -159,9 +148,11 @@ bin_summary <- tibble_Marathon_clean |>
     bins = ceiling(log2(n) + 1)*5,
     bin_width = (max_time - min_time) / bins
   )
-
+#extract single column 'bin_width' into 'bin_summary'
 bin_width_sturges <- pull(bin_summary, bin_width)
+#extract single column 'bins' into 'bin_summary'
 num_bins <- pull(bin_summary, bins)
+#display result
 cat("Bin Width -", bin_width_sturges, "\n")
 
 # -- Histogram plot
@@ -173,10 +164,12 @@ title_text_hist <- paste0(
   format(round(bin_width_sturges * 60, 2), nsmall = 2), " min."
 )
 
-g_1a <- ggplot(tibble_Marathon_clean, aes(x = time_hrs)) +
+# - here is the 'standard' syntax I'll be using.
+# - make the Hist.
+g_2a <- ggplot(tibble_Marathon_clean, aes(x = time_hrs)) +
   geom_histogram(
     binwidth = as.numeric(bin_width_sturges),
-    fill = "cornsilk4",
+    fill = "cornsilk4",        # - pick your own colors
     color = "black"
   ) +
   labs(
@@ -194,7 +187,7 @@ g_1a <- ggplot(tibble_Marathon_clean, aes(x = time_hrs)) +
 title_text_box <- glue("Box plot of NYC Marathon times.")
 
 g_boxplot <- ggplot(tibble_Marathon_clean, aes(x = "", y = time_hrs)) +
-  geom_boxplot(width = 0.3, fill = "skyblue", color = "darkblue") +
+  geom_boxplot(width = 0.3, fill = "skyblue", color = "darkblue") +         # - pick your own colors
   labs(
     x = NULL,
     y = "Time (hours)",
@@ -209,7 +202,7 @@ g_boxplot <- ggplot(tibble_Marathon_clean, aes(x = "", y = time_hrs)) +
   )
 
 # -- Combine with overall title
-combined_plot <- (g_1a | plot_spacer() | g_boxplot) +
+combined_plot <- (g_2a | plot_spacer() | g_boxplot) +
   plot_layout(ncol = 3, widths = c(1, 0.4, 1), guides = "collect") +
   plot_annotation(
     title = "Marathon times of runners in the Men and Women divisions\nof the New York City Marathon, 1970 - 2023.",
@@ -227,9 +220,8 @@ combined_plot
 ```
 
 <div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB;">
-**Question 2b**
-
-.. blah.. blah..<br>
+**Question 2b**<br>
+Box plots are a great way to visualize distributions. Here, we see that the men's and women's time distributions slightly overlap, but only when considering some of the men's outliers. This illustrates a distinctly bimodal distribution, where the two groups are largely separated.
 </div>
 
 ```{r label-me-2b, echo=FALSE}
@@ -265,7 +257,8 @@ g_boxplot_2b <- ggplot(tb_Marathon_2b_v2_clean, aes(x = division, y = time_hrs, 
   labs(
     title = "Marathon times of runners in the Men and Women divisions\nof the New York City Marathon, 1970 - 2023.",
     x = NULL,
-    y = "Time [hours]"
+    y = "Time [hours]",
+    caption = "Source: https://github.com/OpenIntroStat/openintro/blob/main/R/data-nyc_marathon.R"
   ) +
   theme_minimal() +
   theme(
@@ -275,19 +268,65 @@ g_boxplot_2b <- ggplot(tb_Marathon_2b_v2_clean, aes(x = division, y = time_hrs, 
     axis.ticks.x = element_blank()
   )
 
-print(g_boxplot_2b)
+g_boxplot_2b
 ```
 
 
 
 <div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB; margin:20px 0; width:100%; text-align:left;">
-  **Question 2c**
-  #TO_DO
-  <p>If we ignore the outliers for the box plots, the interquartile range(s) for the different divisions (Men/Women) are separated enough visually on the graph that we can overlap the graphs.</p>
-  <p>.. blah.. blah..</p>
+  **Question 2c**<br>
+In a large number of examples, redundancy is subjective—what one person considers 'redundancy' might be seen as a 'feature' by another. 
+Here, we can consolidate the data distributions onto a single plot, as they largely do not overlap. This approach eliminates the need to label both graphs separately. Furthermore, to leverage the visual tendency to perceive relative color differences, one of the groups can be changed to gray [cornsilk4].
+
 </div>
 
 ```{r label-me-2c, echo=FALSE}
+#| message: false       # suppress messages (like read_csv column specs)
+#| results: hide
+# Read the dataset
+tb_Marathon_2b <- read_csv("data/nyc_marathon.csv")
+
+# Select relevant columns
+tb_Marathon_2b_v2 <- tb_Marathon_2b[c("time_hrs", "division")]
+
+# Clean data: remove empty strings and NAs
+tb_Marathon_2b_v2_clean <- tb_Marathon_2b_v2 |>
+  dplyr::filter(
+    if_all(where(is.character), ~ .x != ""),
+    if_all(everything(), ~ !is.na(.x))
+  )
+
+# Define custom colors
+my_colors <- c("Men" = "cornsilk4", "Women" = "#c38081")  # Charcoal grey for Men
+
+# Add a constant x-value to overlay both groups
+tb_Marathon_2b_v2_clean$group <- "All Runners"
+
+# Create overlay plot
+g_boxplot_overlay <- ggplot(tb_Marathon_2b_v2_clean, aes(x = group, y = time_hrs, fill = division)) +
+  geom_boxplot(position = position_dodge(width = 0.4), outlier.shape = NA) +
+  geom_jitter(
+    aes(color = division),
+    position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.6),
+    alpha = 0.6, size = 1.5, show.legend = FALSE
+  ) +
+  scale_fill_manual(values = my_colors, name = "Division") +
+  scale_color_manual(values = my_colors) +
+  labs(
+    title = "Marathon times of runners in the Men and Women divisions\nof the New York City Marathon, 1970 - 2023.",
+    x = NULL,
+    y = "Time [hours]",
+    caption = "Source: https://github.com/OpenIntroStat/openintro/blob/main/R/data-nyc_marathon.R"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  )
+
+# Display the plot
+g_boxplot_overlay
 
 ```
 
