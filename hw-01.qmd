@@ -1,35 +1,57 @@
 ---
 title: "HW 01"
 author: "Nathan Herling"
-due date: "Friday-May-27-2025"
+date: "2025-06-06"
+_due: "Friday-June-06-2025"   
 format: 
   html:
     embed-resources: true
 toc: true
+#NOTES:
+#custom field '_due', 
+#if you want to show in the document:**Due Date:** {{_due}}
 ---
 
 ## 0 - Setup
 
 ```{r setup, echo=FALSE}
-if (!require("pacman")) 
+#--------------------->
+#################
+# Package Setup #
+#################
+#Check if pacman [package manager] is installed, if not install it.
+#throw [FYI] alert either way.
+if (!requireNamespace("pacman", quietly = TRUE)) {
+  message("Installing 'pacman' (not found locally)...")
   install.packages("pacman")
-
+} else {
+  message("[FYI]\n'pacman' already installed — skipping install.")
+}
 # use this line for installing/loading
 # pacman::p_load()
 # - packages to load stored in a variable (vector)
 pkgs <- c("tidyverse","glue","scales","lubridate","patchwork","ggh4x","ggrepel","openintro")
+# - load from the character array/vector
 pacman::p_load(char=pkgs)
 
 # - install tidyverse/dsbox directly from Git Hub
-#suppressMessages(remotes::install_github("username/dsbox"))
-devtools::install_github("tidyverse/dsbox")
+# - this allows for the possible need to install on a repo. pull.
+# - and, if it's already installed just thorw an alert.
+if (!requireNamespace("dsbox", quietly = TRUE)) {
+  message("Installing 'dsbox' from GitHub (not found locally)...")
+  suppressMessages(devtools::install_github("tidyverse/dsbox"))
+} else {
+  message("[FYI]\n'dsbox' already installed — skipping GitHub install.")
+}
+
 # - alert to user packages loaded.
 cat(paste(
   "The packages loaded:",
   paste("-", pkgs, collapse = "\n"),
   sep = "\n"
 ))
-###############################################################################
+
+#-------------------------->
 ######################
 # Basic set Theme up #
 ######################
@@ -47,14 +69,15 @@ knitr::opts_chunk$set(
   fig.align = "center", # center align figures
   dpi = 300             # higher dpi, sharper image
 )
-#####################################################################################
 ```
 
 
-
-## 1 - Road traffic accidents in Edinburgh
-
+## 1 - Edinburgh Traffic
 <div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB;">
+**Question 1**<br>
+<div style="background-color:#e0e0e0; padding:10px; border-radius:5px; border:1px solid #16DB65; display:flex; align-items:center; justify-content:center; height:60px;">
+  <strong><br>Recreate the plot and interpret in context of the data.</strong>
+</div>
 
 This plot visualizes the distribution of road accidents at different times of day, separated into weekdays and weekends. The data is faceted by whether the day is a weekend, making it easy to compare patterns across these two categories. Accident severity is color-coded to distinguish between fatal, serious, and slight incidents. The plot highlights time-based trends that may help identify peak periods of high-risk activity. This information could support efforts to improve traffic safety or allocate emergency response resources more effectively.
 
@@ -98,10 +121,16 @@ g_1
 
 ```
 
+
 ## 2 - NYC marathon winners
 <div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB;">
 **Question 2a**<br>
-The histogram highlights a bimodal distribution, revealing differences in marathon times between men and women. It effectively shows the shape of the data and how values cluster across different ranges. In contrast, the box plot does not capture modality but provides a summary of central tendency, variability, and outliers. While histograms emphasize distribution shape, box plots offer a concise overview of data spread.
+<div style="background-color:#e0e0e0; padding:10px; border-radius:5px; border:1px solid #16DB65; display:flex; align-items:center; justify-content:center;">
+  <strong><br>What features of the distribution are apparent in the histogram and not the box plot? What features are apparent in the box plot but not in the histogram?</strong>
+</div>
+Traditional thought holds that the histogram highlights a bimodal distribution, revealing differences in marathon times between men and women. It effectively shows the shape of the data and how values cluster across different ranges. In contrast, the box plot does not capture modality but provides a summary of central tendency, variability, and outliers. While histograms emphasize the shape of the distribution, box plots offer a concise overview of data spread.
+
+However, the bimodal distribution pattern is still visible in the jittered data points of the box plot. That said, the histogram creates a more striking visual comparison among the data groupings, and their relative counts, especially when contrasted with the more abstract summary offered by the box plot.
 </div>
 
 ```{r label-me-2, echo=FALSE}
@@ -184,18 +213,29 @@ g_2a <- ggplot(tibble_Marathon_clean, aes(x = time_hrs)) +
   )
 
 # -- Boxplot plot
+# Add point_type variable to your data
+tibble_Marathon_clean <- tibble_Marathon_clean %>%
+  mutate(point_type = "Jittered points")
+
+title_text_box <- glue("Box plot of NYC Marathon times.")
+
+library(dplyr)
+library(ggplot2)
+library(glue)
+
+#-------- box plot
 title_text_box <- glue("Box plot of NYC Marathon times.")
 
 g_boxplot <- ggplot(tibble_Marathon_clean, aes(x = "", y = time_hrs)) +
-  geom_boxplot(width = 0.3, fill = "skyblue", color = "darkblue") +         # - pick your own colors
+  geom_boxplot(color = "darkblue", fill = "#65F595", width = 0.9, outlier.shape = NA) +   # no outliers
+  geom_jitter(width = 0.15, alpha = 0.4, size = 2, color = "#16DB65") +                   # jitter points
   labs(
     x = NULL,
     y = "Time (hours)",
     title = title_text_box
   ) +
-  scale_x_discrete(breaks = NULL) +
-  scale_y_continuous(limits = c(1.75, NA))+
   theme(
+    legend.position = "none",  # remove legend
     plot.title = element_text(size = 11, face = "plain", hjust = 0.5),
     axis.title = element_text(size = 10),
     axis.text = element_text(size = 9)
@@ -221,6 +261,9 @@ combined_plot
 
 <div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB;">
 **Question 2b**<br>
+<div style="background-color:#e0e0e0; padding:10px; border-radius:5px; border:1px solid #16DB65; display:flex; align-items:center; justify-content:center;">
+  <strong><br>Based on the plots you made, compare the distribution of marathon times for men and women.</strong>
+</div>
 Box plots are a great way to visualize distributions. Here, we see that the men's and women's time distributions slightly overlap, but only when considering some of the men's outliers. Plotting either alone would not allow us to see the bimodal distribution, plotting together however, allows us to see a distinctly bimodal distribution, where the two groups are largely separated.
 </div>
 
@@ -228,8 +271,7 @@ Box plots are a great way to visualize distributions. Here, we see that the men'
 #| message: false       # suppress messages (like read_csv column specs)
 #| results: hide
 #load the dataset, print it with view
-tb_Marathon_2b <- read_csv("data/nyc_marathon.csv")
-#View(tb_Marathon_2b)
+# - data does not need to be re-loaded.
 
 #mutate/select desired cols.
 # - create a new tibble(df) for only times(hr:min:sec)
@@ -248,24 +290,28 @@ tb_Marathon_2b_v2_clean <- tb_Marathon_2b_v2 |>
 # Custom colors for Men and Women
 my_colors <- c("Men" = "#85bfc3", "Women" = "#c38081")
 
-g_boxplot_2b <- ggplot(tb_Marathon_2b_v2_clean, aes(x = division, y = time_hrs, fill = division)) +
-  geom_boxplot(show.legend = TRUE, outlier.shape = NA) +  # Hide default outliers to avoid double plotting
-  geom_jitter(aes(color = division), width = 0.2, alpha = 0.6, size = 1.5, show.legend = FALSE) +  # jitter points
-  facet_wrap(~ division) +                                # Facet by division
-  scale_fill_manual(values = my_colors) +                # Boxplot fill colors
-  scale_color_manual(values = my_colors) +               # Jitter points color matches box fill
+g_boxplot_2b <- ggplot(tb_Marathon_2b_v2_clean, aes(x = "", y = time_hrs, fill = division)) +
+  geom_boxplot(show.legend = FALSE, outlier.shape = NA) +
+  geom_jitter(aes(color = division), width = 0.6, alpha = 0.6, size = 1.5, show.legend = FALSE) +
+  facet_wrap(~ division) +
+  scale_fill_manual(values = my_colors) +
+  scale_color_manual(values = my_colors) +
   labs(
     title = "Marathon times of runners in the Men and Women divisions\nof the New York City Marathon, 1970 - 2023.",
     x = NULL,
     y = "Time [hours]",
     caption = "Source: https://github.com/OpenIntroStat/openintro/blob/main/R/data-nyc_marathon.R"
   ) +
-  theme_minimal() +
+  scale_y_continuous(
+    name = "Time [hours]",
+    sec.axis = dup_axis(name = "Time [hours]")
+  ) +
   theme(
-    plot.title = element_text(hjust = 0.5),
-    strip.text = element_text(size = 14, face = "bold"),
-    axis.text.x = element_blank(),
-    axis.ticks.x = element_blank()
+    axis.title.y.right = element_text(size = 12, face = "plain"),
+    axis.text.y.right = element_text(size = 9, face = "plain"),
+    axis.ticks.y.right = element_blank(), #get rid of tick marks.
+    axis.line.y.right = element_blank(), #get rid of the bold line on the right side of the plot.
+    legend.position = "none"
   )
 
 g_boxplot_2b
@@ -275,6 +321,9 @@ g_boxplot_2b
 
 <div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB; margin:20px 0; width:100%; text-align:left;">
   **Question 2c**<br>
+  <div style="background-color:#e0e0e0; padding:10px; border-radius:5px; border:1px solid #16DB65; display:flex; align-items:center; justify-content:center;">
+  <strong><br>What information in the above plot is redundant? Redo the plot avoiding this redundancy. How does this update change the data-to-ink ratio?</strong>
+</div>
 In a large number of examples, redundancy is subjective—what one person considers 'redundancy' might be seen as a 'feature' by another. 
 Here, we can consolidate the data distributions onto a single plot, as they largely do not overlap. This approach eliminates the need to label both graphs separately. Furthermore, to leverage the visual tendency to perceive relative color differences, one of the groups can be changed to gray [cornsilk4]. By keeping our data the same and reducing the amount of ink used, we've effectively increased our data/ink ratio, which is the desired effect.
 
@@ -283,11 +332,12 @@ Here, we can consolidate the data distributions onto a single plot, as they larg
 ```{r label-me-2c, echo=FALSE}
 #| message: false       # suppress messages (like read_csv column specs)
 #| results: hide
-# Read the dataset
-tb_Marathon_2b <- read_csv("data/nyc_marathon.csv")
+#load the dataset, print it with view
+# - data does not need to be re-loaded.
+# - data loaded in part 2a, in: tibble_Marathon
 
 # Select relevant columns
-tb_Marathon_2b_v2 <- tb_Marathon_2b[c("time_hrs", "division")]
+tb_Marathon_2b_v2 <- tibble_Marathon[c("time_hrs", "division")]
 
 # Clean data: remove empty strings and NAs
 tb_Marathon_2b_v2_clean <- tb_Marathon_2b_v2 |>
@@ -334,16 +384,18 @@ g_boxplot_overlay
 <div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB; margin:20px 0; width:100%; text-align:left;">
 
 **Question 2d**
-
-This plot allows us to clearly see how tightly the data is grouped around the mean for both categories. While the histogram also conveys this information, this visual representation presents it in a different modality. The bimodal distribution of the two data categories is clearly visible, along with the minimal overlap between the datasets. Additionally, both datasets exhibit a similar decaying exponential shape from left to right, which was not apparent in the other data plots.
+  <div style="background-color:#e0e0e0; padding:10px; border-radius:5px; border:1px solid #16DB65; display:flex; align-items:center; justify-content:center;">
+  <strong><br>Visualize the marathon times of men and women over the years. As is usual with time series plot, year should go on the x-axis. Use different colors and shapes to represent the times for men and women. Make sure your colors match those in the previous part. Once you have your plot, describe what is visible in this plot but not in the others.</strong>
+</div>
+This plot clearly shows how the distribution of finish times has changed since 1970. It also highlights that most of the outliers for both gender groups occur before 1980. The bimodal distribution of the two groups is clearly visible, along with the minimal overlap between them. The general separation in mean finish times is evident in the vertical gap between the two data clusters.
 </div>
 
 ```{r label-me-2d, echo=FALSE}
 #| message: false       # suppress messages (like read_csv column specs)
 #| results: hide
 #load the dataset, print it with view
-tb_Marathon_2d <- read_csv("data/nyc_marathon.csv")
-#View(tb_Marathon_2d)
+# - data does not need to be re-loaded.
+# - data loaded in part 2a, in: tibble_Marathon
 
 #mutate/select desired cols.
 # - create a new tibble(df) for only times(hr:min:sec)
@@ -391,6 +443,9 @@ g_2d
 <div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB; margin:20px 0; width:100%; text-align:left;">
 
 **Question 3a**<br>
+  <div style="background-color:#e0e0e0; padding:10px; border-radius:5px; border:1px solid #16DB65; display:flex; align-items:center; justify-content:center;">
+  <strong><br>a. What does the following code do? Does it work? Does it make sense? Why/why not?.</strong>
+</div>
 This code attempts to make two differenlty dimensioned plots overlay one another.
  <pre style="white-space:pre-wrap; line-height:1;"><code>
 ggplot(county) +
@@ -398,13 +453,14 @@ ggplot(county) +
   geom_boxplot(aes(x = smoking_ban, y = pop2017)
   </code></pre>
   
-  The first line - Creates a geom_point or scatter plot with median_edv vs. median_hh_income.
+  The first line creates a scatter plot with <code>median_edu</code> on the x-axis and <code>median_hh_income</code> on the y-axis:</p>
  <pre style="border:1px solid #4A4A4A; padding:5px;"><code>
 ggplot(county) +
   geom_point(aes(x = median_edu, y = median_hh_income)) +
   </code></pre>
 
-The second line - Creates a boxplot with smoking_ban and pop2017 as its parameters.
+
+  <p>The second line adds a boxplot layer with <code>smoking_ban</code> (likely categorical) on the x-axis and <code>pop2017</code> on the y-axis:</p>
  <pre style="border:1px solid #4A4A4A; padding:5px;"><code>
 ggplot(county) +
   geom_boxplot(aes(x = smoking_ban, y = pop2017))
@@ -414,11 +470,16 @@ ggplot(county) +
 Both geom_point and geom_boxplot are layered in the same ggplot, but they rely on different x and y variables. On their own, each layer would produce a meaningful plot, but combined, they result in a confusing and misleading visualization—a kind of visual cacophony.
 
 Technically, the code may run without error, but it doesn't "work" from a data visualization standpoint. Mixing different aesthetics (continuous vs. categorical x-axes) in one plot without coordinating scales or structure leads to a plot that is hard to interpret and potentially misleading.
+
+ <p><strong>Conclusion:</strong> The code may run without errors, but it doesn’t produce a meaningful visualization. Combining unrelated aesthetic mappings in a single plot without aligning their structure leads to a misleading and ineffective graphic.</p>
 </div>
 
 <div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB; margin:20px 0; width:100%; text-align:left;">
 
 **Question 3b**<br>
+  <div style="background-color:#e0e0e0; padding:10px; border-radius:5px; border:1px solid #16DB65; display:flex; align-items:center; justify-content:center;">
+  <strong><br>Which of the following two plots makes it easier to compare poverty levels (poverty) across people from different median education levels (median_edu)? What does this say about when to place a faceting variable across rows or columns?</strong>
+</div>
 We are to compare two graphs, each showing the same data but presented differently.
 <img src="images/county-facets-1.png" alt="County facets plot" style="width:100%; max-width:300px;" />
 <img src="images/county-facets-2.png" alt="County facets plot" style="width:100%; max-width:300px;" />
@@ -438,38 +499,67 @@ as the horizontal graph.
 <div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB; margin:20px 0; width:100%; text-align:left;">
 
 **Question 3c**<br>
+  <div style="background-color:#e0e0e0; padding:10px; border-radius:5px; border:1px solid #16DB65; display:flex; align-items:center; justify-content:center;">
+  <strong><br>Recreate the R code necessary to generate the following graphs. Note that wherever a categorical variable is used in the plot, it’s <code>metro.</code></strong>
+</div>
+
 <p><strong>Note(s):</strong></p>
 <ul>
-  <li>I left these warnings in - as they seem relevant.</li>
-  <li>If I had more time, I'd work on cleaning the data.</li>
-  <li>I did not have enough time to adequately solve the size rendering problem here.</li>
+  <li>The exercise appears to want the NA(s) left in.</li>
+  <li>Warnings were suppressed to clean up output.</li>
+  <li>A 'user alert' was used instead, re: NA(s)</li>
   <li>Use 'zoom' when needed (ha).</li>
-  <li>I kept the 'minimal' theme on - so the background grey shading isn't present on my graphs.</li>
+  <li>I could not get my trend lines to extend as far as the given example(s).</li>
 </ul>
 </div>
+
+
 ```{r label-me-3c, echo=FALSE}
 #| message: false       # suppress messages (like read_csv column specs)
-#| results: hide
-#| fig-width: 14 
-#| fig-height: 10
- 
+#| results: 'asis'      # let's me render HTML code at run time
+#| fig-width: 16
+#| fig-asp: 1.1     # aspect ratio per panel
+#| fig-height: 0  # disables fixed height so asp * width takes effect
+#| warning: false
 
 data(county)         # Loads the dataset into the environment
-#View(county)         # Opens a spreadsheet-style view of the dataset
-#head(county)         # Shows the first few rows
-#str(county)          # Shows structure and variable types
-
-#colnames(county)
-
-
 #----- plan ------
 # build the plots individually then plot them in grid fomrat.
 # the closest 'guess' I could get to the model was using: method = "loess"
 #------------------
 
+#--------------- the exercise appears to want NAs ----------------
+#--------------- so we'll keep them and throw a controlled alert -
+#--------------------------------------------------------------->>
+# Count NAs in relevant columns used by ggplot layers
+num_na_points <- sum(is.na(county$homeownership) | is.na(county$poverty))
+num_na_smooth <- sum(is.na(county$homeownership[county$metro == "yes"]) | 
+                       is.na(county$poverty[county$metro == "yes"]))
+
+# Count NAs
+num_na_points <- sum(is.na(county$homeownership) | is.na(county$poverty))
+num_na_smooth <- sum(
+  is.na(county$homeownership[county$metro == "yes"]) |
+  is.na(county$poverty[county$metro == "yes"])
+)
+
+cat('<div class="fyi-block">\n')
+cat('<span style="color: red; font-weight: bold;">[FYI]</span> Missing values (NA) were intentionally <em>not</em> filtered out prior to plotting.<br>\n')
+cat('This allows <code>ggplot2</code> to handle them automatically, which results in some rows being dropped internally.<br><br>\n')
+
+if (num_na_points > 0) {
+  cat(paste("→", num_na_points, "row(s) contained NA in <code>homeownership</code> or <code>poverty</code> and were skipped by <code>geom_point()</code><br>\n"))
+}
+if (num_na_smooth > 0) {
+  cat(paste("→", num_na_smooth, "row(s) with NA were skipped by the smoothing line (<code>metro == 'yes'</code>)<br>\n"))
+}
+cat('</div>\n')
+
+
 # Scales and theme customization
-common_theme <- theme_minimal(base_size = 12) +
+common_theme <- theme_gray(base_size = 12) +  # has grey background by default
   theme(
+    axis.line = element_line(color = "white"),
     axis.ticks.length = unit(0.25, "cm"),
     axis.ticks = element_line(color = "black"),
     legend.position = "none"
@@ -489,11 +579,13 @@ pA <- ggplot(county, aes(x = homeownership, y = poverty)) +
 pB <- ggplot(county, aes(x = homeownership, y = poverty)) +
   geom_point() +
   geom_smooth(data = county %>% filter(metro == "yes"),
-              method = "loess", se = FALSE, color = "blue") +
+              method = "loess", se = FALSE, 
+              color = "#2853d4",
+              fullrange = TRUE) +
   x_scale + y_scale + common_theme +
   ggtitle("Plot B")
 
-#print(pB)
+#suppressWarnings(print(pB))
 
 pC <- ggplot(county, aes(x = homeownership, y = poverty)) +
   geom_point() +
@@ -502,7 +594,7 @@ pC <- ggplot(county, aes(x = homeownership, y = poverty)) +
   x_scale + y_scale + common_theme +
   ggtitle("Plot C")
 
-#print(pC)
+#suppressWarnings(print(pC))
 
 pD <- ggplot(county, aes(x = homeownership, y = poverty)) +
   geom_point() +
@@ -512,11 +604,10 @@ pD <- ggplot(county, aes(x = homeownership, y = poverty)) +
   ggtitle("Plot D")
 
 
-#print(pD)
-# ---- turned out to be the most complicated ...
+#suppressWarnings(print(pD))
+
 pE <- ggplot(county, aes(x = homeownership, y = poverty)) +
   geom_point(aes(color = metro)) +
-  
   geom_smooth(
     data = county %>% filter(metro == "no"),
     method = "loess", se = FALSE,
@@ -540,8 +631,9 @@ pE <- ggplot(county, aes(x = homeownership, y = poverty)) +
     name = "metro"
   ) +
   
-  x_scale + y_scale +
-  theme_minimal(base_size = 12) +
+  x_scale + y_scale + 
+  
+  common_theme +            #<---- make it grey, my guy.
   theme(
     axis.ticks.length = unit(0.25, "cm"),
     axis.ticks = element_line(color = "black"),
@@ -556,7 +648,8 @@ pE <- ggplot(county, aes(x = homeownership, y = poverty)) +
   
   ggtitle("Plot E")
 
-#print(pE)
+
+#suppressWarnings(print(pE))
 
 pF <- ggplot(county, aes(x = homeownership, y = poverty, color = metro)) +
   geom_point() +
@@ -564,7 +657,7 @@ pF <- ggplot(county, aes(x = homeownership, y = poverty, color = metro)) +
   geom_smooth(data = county %>% filter(metro == "no"), method = "loess", se = FALSE, color = "#f8766e", linetype = "solid") +
   geom_smooth(data = county %>% filter(metro == "yes"), method = "loess", se = FALSE, color = "#01bfc3", linetype = "solid") +
   x_scale + y_scale +
-  theme_minimal(base_size = 12) +
+  common_theme +            #<---- make it grey, my guy.
   theme(
     axis.ticks.length = unit(0.25, "cm"),
     axis.ticks = element_line(color = "black"),
@@ -572,7 +665,7 @@ pF <- ggplot(county, aes(x = homeownership, y = poverty, color = metro)) +
   ) +
   ggtitle("Plot F")
 
-#print(pF)
+#suppressWarnings(print(pF))
 
 pG <- ggplot(county, aes(x = homeownership, y = poverty, color = metro)) +
   geom_point() +
@@ -583,20 +676,20 @@ pG <- ggplot(county, aes(x = homeownership, y = poverty, color = metro)) +
     name = "metro"
   ) +
   x_scale + y_scale +
-  theme_minimal(base_size = 12) +
+  common_theme +            #<---- make it grey, my guy.
   theme(
     axis.ticks.length = unit(0.25, "cm"),
     axis.ticks = element_line(color = "black"),
     legend.position = "right"
   ) +
   ggtitle("Plot G")
-#print(pG)
+#suppressWarnings(print(pG))
 
 pH <- ggplot(county, aes(x = homeownership, y = poverty, color = metro)) +
   geom_point() +
   scale_color_manual(values = c("no" = "#f8766e", "yes" = "#01bfc3", "NA" = "#868686"), name = "metro") +
   x_scale + y_scale +
-  theme_minimal(base_size = 12) +
+  common_theme +            #<---- make it grey, my guy.
   theme(
     axis.ticks.length = unit(0.25, "cm"),
     axis.ticks = element_line(color = "black"),
@@ -604,21 +697,20 @@ pH <- ggplot(county, aes(x = homeownership, y = poverty, color = metro)) +
   ) +
   ggtitle("Plot H")
 
-#print(pH)
+#suppressWarnings(print(pH))
 
 
 # - combine all plots (Noice..)
-combined_plot <- (pA | pB) / (pC | pD) / (pE | pF) / (pG | pH)
-  
-
-print(combined_plot)
+print((pA | pB) / (pC | pD) / (pE | pF) / (pG | pH))
 
 ```
 
 ## 4 - Rental apartments in SF
 <div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB; margin:20px 0; width:100%; text-align:left;">
 **Question 4a**<br>
-<b>Describe the relationship between income and credit card balance. Touch on how/if the relationship varies based on the four (4) category combinations.</b><br>
+  <div style="background-color:#e0e0e0; padding:10px; border-radius:5px; border:1px solid #16DB65; display:flex; align-items:center; justify-content:center;">
+  <strong><br>Describe the relationship between income and credit card balance. Touch on how/if the relationship varies based on the four (4) category combinations.</strong>
+</div>
 The relationship between income and credit card balance is clearly increasing—higher income tends to correspond with higher balances. This positive trend holds across all categories examined. Notably, the slope of the trend lines is nearly identical when comparing non-married students to non-married non-students, and a similar pattern is seen when comparing married students to married non-students.
 
 However it should be noted that all distributions examined are skewed towards the left end of the wage scale.
@@ -690,17 +782,26 @@ g4a <- ggplot(tb_credis_tf1, aes(x = income, y = balance)) +
 
 g4a
 ```
+
+
 <div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB; margin:20px 0; width:100%; text-align:left;">
 
 **Question 4b**<br>
-<b>Based on your answer to part (a), do you think married and student might be useful predictors, in addition to income for predicting credit card balance? Explain your reasoning.</b><br>
-Yes, with some caveats.
-There are a few outliers with zero balances that should be taken into account. Additionally, the distribution of the data is skewed—most observations fall below an income of $75K, and within this range, there is a higher variance in credit card balances.
-Overall, the relationship between income and balance appears to be roughly linear, suggesting that income is a useful predictor. Finally, it should be noted that this synopsis could apply to all four categories examined, not just: married students.
+  <div style="background-color:#e0e0e0; padding:10px; border-radius:5px; border:1px solid #16DB65; display:flex; align-items:center; justify-content:center;">
+  <strong><br>Based on your answer to part (a), do you think <code>married</code> and <code>student</code> might be useful predictors, in addition to <code>income</code> for predicting credit card balance? Explain your reasoning.</strong>
 </div>
+Yes, with some caveats.
+Credit card balance is primarily influenced by income across all four categories examined. However, when considering the categories defined by married and student status alongside income, it does appear to be  possible to predict credit card balance within a range of certainty.
+
+</div>
+
+
 
 <div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB; margin:20px 0; width:100%; text-align:left;">
   **Question 4c **
+  <div style="background-color:#e0e0e0; padding:10px; border-radius:5px; border:1px solid #16DB65; display:flex; align-items:center; justify-content:center;">
+  <strong><br>Calculate credit utilization for all individuals in the credit data, and use it to recreate the following visualization.</strong>
+</div>
 </div>
 
 
@@ -770,18 +871,27 @@ g4c <- ggplot(tb_credis_tf2, aes(x = income, y = credit_utilization)) +
 g4c
 
 ```
+
+
 <div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB;">
 
 **Question 4d**
-<br><b>Based on the plot from part (c), how, if at all, are the relationships between income and credit utilization different than the relationships between income and credit balance for individuals with various student and marriage status.</b><br>
+  <div style="background-color:#e0e0e0; padding:10px; border-radius:5px; border:1px solid #16DB65; display:flex; align-items:center; justify-content:center;">
+  <strong><br>Based on the plot from part (c), how, if at all, are the relationships between income and credit utilization different than the relationships between income and credit balance for individuals with various student and marriage status.</strong>
+  </div>
 The relationships between income and credit utilization now differ more distinctly across the four categories compared to the overall positive trends observed in part (c) with credit balance. Specifically, there is a positive relationship between income and credit utilization for both married and non-married non-students. In contrast, non-married students show a strong negative relationship, which may partly be influenced by the geometry or distribution of the dataset. For married students, the relationship is only slightly negative. Overall, these differences highlight that the patterns seen in credit utilization are not as uniformly positive as those in credit balance, and they vary more noticeably by student and marital status.
 </div>
+
+ 
 
 
 ## 5 - Napoleon’s march.
 <div style="background-color:#f0f0f0; padding:10px; border-radius:5px; border:1px solid #87CEEB;">
 
-**Question 5**<br>
+**Question 5**
+ <div style="background-color:#e0e0e0; padding:10px; border-radius:5px; border:1px solid #16DB65; display:flex; align-items:center; justify-content:center;">
+  <strong>The instructions for this exercise are simple: recreate the Napoleon’s march plot by Charles John Minard in ggplot2.</strong>
+  </div>
 <b>Part a</b><br>
 Here are a couple of sites that helped me with the code and understanding of the figure.
 <ul>
