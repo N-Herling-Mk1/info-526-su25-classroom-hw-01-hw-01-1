@@ -30,7 +30,16 @@ if (!requireNamespace("pacman", quietly = TRUE)) {
 # use this line for installing/loading
 # pacman::p_load()
 # - packages to load stored in a variable (vector)
-pkgs <- c("tidyverse","glue","scales","lubridate","patchwork","ggh4x","ggrepel","openintro")
+pkgs <- c(
+  "tidyverse",
+  "glue",
+  "scales",
+  "lubridate",
+  "patchwork",
+  "ggh4x",
+  "ggrepel",
+  "openintro"
+)
 # - load from the character array/vector
 pacman::p_load(char=pkgs)
 
